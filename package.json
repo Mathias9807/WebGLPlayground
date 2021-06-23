@@ -1,0 +1,21 @@
+{
+  "name": "WebGLPlayground",
+  "version": "1.0.0",
+  "author": "Mathias Johansson",
+  "license": "MIT",
+  "scripts": {
+    "start": "node_modules/webpack/bin/webpack.js serve --hot"
+  },
+  "dependencies": {
+    "@types/webgl2": "^0.0.6",
+    "gl-matrix": "^3.3.0",
+    "ts-loader": "^9.2.3",
+    "typescript": "^4.3.2",
+    "webgl-obj-loader": "^2.0.8"
+  },
+  "devDependencies": {
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
