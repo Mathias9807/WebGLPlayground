@@ -54,11 +54,11 @@ const main = async () => {
 	gl.cullFace(gl.BACK);
 
 	scene = new StaticObject();
-	scene.addModel(await loadOBJ('/res/suzanne.obj'), [0,0,0], [0,0,0], [0.5,0.5,0.5]);
-	scene.addModel(await loadOBJ('/res/Wall.obj'), [0,0,0]);
-	plane = await loadOBJ('/res/plane.obj');
+	scene.addModel(await loadOBJ('res/suzanne.obj'), [0,0,0], [0,0,0], [0.5,0.5,0.5]);
+	scene.addModel(await loadOBJ('res/Wall.obj'), [0,0,0]);
+	plane = await loadOBJ('res/plane.obj');
 
-	texture = await loadTexture('/checkers.png', {nearest: true});
+	texture = await loadTexture('checkers.png', {nearest: true});
 	texture.bind(0);
 
 	setInterval(render, 125);

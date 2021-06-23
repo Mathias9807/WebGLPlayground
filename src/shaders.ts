@@ -2,7 +2,7 @@ import { gl } from "./main";
 
 import { glMatrix, mat4 } from 'gl-matrix';
 
-export let shaderRoot = '/shaders/';
+export let shaderRoot = 'shaders/';
 
 export let currentShader: Shader;
 
