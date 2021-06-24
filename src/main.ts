@@ -7,8 +7,9 @@ export let gl: WebGLRenderingContext;
 
 export let screenFb: Framebuffer;
 export let shadowFb: Framebuffer;
+export let tempFb: Framebuffer;
 
-let shader: Shader, shadowShader: Shader, plainShader: Shader;
+let shader: Shader, shadowShader: Shader, plainShader: Shader, gauss1: Shader;
 let model: Model, plane: Model;
 let scene: StaticObject;
 let texture: Texture;
@@ -25,17 +26,18 @@ const main = async () => {
 		return;
 	}
 
-	console.log(gl.getExtension('EXT_color_buffer_float'));
-	console.log(gl.getExtension('OES_texture_float_linear'));
+	gl.getExtension('EXT_color_buffer_float');
+	gl.getExtension('OES_texture_float_linear');
 	glMatrix.setMatrixArrayType(Array);
 	gl.activeTexture(gl.TEXTURE0);
 	
-	shadowFb = createFramebuffer(512, 512, {'float': true});
+	shadowFb = createFramebuffer(256, 256, {'float': true, 'mipmap': true});
+	tempFb = createFramebuffer(window.innerWidth, window.innerHeight);
 	screenFb = new Framebuffer(null, window.innerWidth, window.innerHeight);
 	screenFb.bind();
 
 	camera = new Camera();
-	camera.setFramebuffer(screenFb);
+	camera.setFramebuffer(tempFb);
 	camera.extraPos[2] = 3;
 
 	shadowCam = new Camera();
@@ -48,6 +50,7 @@ const main = async () => {
 
 	shadowShader = await compileShader('variance');
 	plainShader = await compileShader('plain');
+	gauss1 = await compileShader('gauss1');
 	setUniformi(plainShader, 'tex', 0);
 	shader = await compileShader('shader');
 	setUniformi(shader, 'tex', 0);
@@ -94,6 +97,11 @@ function render() {
 	camera.fb.clear([1,1,1,1]);
 	scene.render();
 
+	gauss1.use();
+	screenFb.bind();
+	tempFb.tex.bind(0);
+	renderModel(plane);
+
 	t += 1;
 }
 
@@ -103,6 +111,8 @@ function resizeCallback() {
 	let h = window.innerHeight;
 	screenFb.width = gl.canvas.width = w;
 	screenFb.height = gl.canvas.height = h;
+	tempFb = createFramebuffer(window.innerWidth, window.innerHeight);
+	camera.setFramebuffer(tempFb);
 	screenFb.bind();
 
 	mat4.identity(camera.proj);

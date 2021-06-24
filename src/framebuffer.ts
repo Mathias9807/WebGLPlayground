@@ -115,13 +115,18 @@ export function createTexture(width: number, height: number, options?) {
 	// @ts-ignore
 		type, options?.data);
 
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,
-		options?.nearest ? gl.NEAREST : gl.LINEAR_MIPMAP_LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-		options?.nearest ? gl.NEAREST : gl.LINEAR_MIPMAP_LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-	gl.generateMipmap(gl.TEXTURE_2D);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,
+		options?.nearest ? gl.NEAREST : gl.LINEAR);
+	if (options?.mipmap) {
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+			options?.nearest ? gl.NEAREST_MIPMAP_NEAREST : gl.LINEAR_MIPMAP_LINEAR);
+		if (options?.data) gl.generateMipmap(gl.TEXTURE_2D);
+	}else {
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+			options?.nearest ? gl.NEAREST : gl.LINEAR);
+	}
 
 	return new Texture(tex, width, height);
 }
