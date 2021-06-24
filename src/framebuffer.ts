@@ -103,20 +103,25 @@ export function createDepthTexture(width: number, height: number) {
 	return new Texture(tex, width, height);
 }
 
-export function createTexture(width: number, height: number, data?: ArrayBufferView | HTMLImageElement, options?: {nearest: boolean}) {
+export function createTexture(width: number, height: number, options?) {
 	const tex = gl.createTexture();
 	bindTexture(tex, 0);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA,
-	// @ts-ignore
-		gl.UNSIGNED_BYTE, data);
 
-	// Set the filtering so we don't need mips
+	// @ts-ignore
+	let internalFormat = options?.float ? gl.RGBA32F : gl.RGBA;
+	let format = gl.RGBA;
+	let type = options?.float ? gl.FLOAT : gl.UNSIGNED_BYTE;
+	gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, width, height, 0, format,
+	// @ts-ignore
+		type, options?.data);
+
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER,
-		options?.nearest ? gl.NEAREST : gl.LINEAR);
+		options?.nearest ? gl.NEAREST : gl.LINEAR_MIPMAP_LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-		options?.nearest ? gl.NEAREST : gl.LINEAR);
+		options?.nearest ? gl.NEAREST : gl.LINEAR_MIPMAP_LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+	gl.generateMipmap(gl.TEXTURE_2D);
 
 	return new Texture(tex, width, height);
 }
@@ -127,7 +132,8 @@ export async function loadTexture(url: string, options?) {
 		img.src = url;
 		img.onload = resolve;
 	});
-	return createTexture(img.width, img.height, img, options);
+	options.data = img;
+	return createTexture(img.width, img.height, options);
 }
 
 export function bindTexture(tex: WebGLTexture, slot: number) {
@@ -135,7 +141,7 @@ export function bindTexture(tex: WebGLTexture, slot: number) {
 	gl.bindTexture(gl.TEXTURE_2D, tex);
 }
 
-export function createFramebuffer(width: number, height: number, options?: {depth}) {
+export function createFramebuffer(width: number, height: number, options?) {
 	let fb = new Framebuffer(gl.createFramebuffer(), width, height);
 	bindFramebuffer(fb.fb);
 
@@ -146,7 +152,7 @@ export function createFramebuffer(width: number, height: number, options?: {dept
 		return fb;
 	}
 
-	let tex = createTexture(width, height);
+	let tex = createTexture(width, height, options);
 	fb.tex = tex;
 	gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
 		gl.TEXTURE_2D, tex.tex, 0);

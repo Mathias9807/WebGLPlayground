@@ -8,7 +8,7 @@ export let gl: WebGLRenderingContext;
 export let screenFb: Framebuffer;
 export let shadowFb: Framebuffer;
 
-let shader: Shader, shadowShader: Shader;
+let shader: Shader, shadowShader: Shader, plainShader: Shader;
 let model: Model, plane: Model;
 let scene: StaticObject;
 let texture: Texture;
@@ -18,16 +18,19 @@ const main = async () => {
 	const canvas = <HTMLCanvasElement> document.querySelector('#glCanvas');
 	// Initialize the GL context
 	gl = canvas.getContext('webgl2');
-	glMatrix.setMatrixArrayType(Array);
-	gl.activeTexture(gl.TEXTURE0);
-	
+
 	// Only continue if WebGL is available and working
 	if (gl === null) {
 		alert('Unable to initialize WebGL. Your browser or machine may not support it.');
 		return;
 	}
 
-	shadowFb = createFramebuffer(128, 128, {depth: true});
+	console.log(gl.getExtension('EXT_color_buffer_float'));
+	console.log(gl.getExtension('OES_texture_float_linear'));
+	glMatrix.setMatrixArrayType(Array);
+	gl.activeTexture(gl.TEXTURE0);
+	
+	shadowFb = createFramebuffer(512, 512, {'float': true});
 	screenFb = new Framebuffer(null, window.innerWidth, window.innerHeight);
 	screenFb.bind();
 
@@ -43,7 +46,9 @@ const main = async () => {
 	mat4.identity(shadowCam.proj);
 	mat4.ortho(shadowCam.proj, -2, 2, -2, 2, 0, 5);
 
-	shadowShader = await compileShader('shadow');
+	shadowShader = await compileShader('variance');
+	plainShader = await compileShader('plain');
+	setUniformi(plainShader, 'tex', 0);
 	shader = await compileShader('shader');
 	setUniformi(shader, 'tex', 0);
 	setUniformi(shader, 'shadowTex', 1);
@@ -67,12 +72,10 @@ const main = async () => {
 let t = 0;
 function render() {
 	shadowShader.use();
-	gl.cullFace(gl.FRONT);
 	shadowCam.fb.clear();
 	shadowCam.rot[1] += 0.05;
 	shadowCam.use();
 	scene.render();
-	gl.cullFace(gl.BACK);
 
 	shader.use();
 	let lightDir = vec4.create();
@@ -83,17 +86,14 @@ function render() {
 	setUniformf(shader, 'light', [lightDir[0], lightDir[1], lightDir[2]]);
 	camera.rot[1] += -0.05 * Math.sin(0.8 + t * 0.1);
 	camera.use();
-	let i = mat4.create();
-	mat4.identity(i);
-	// setUniformMat(shader, 'world', i);
-	// setUniformMat(shader, 'proj', i);
-	// setUniformMat(shader, 'model', i);
 	setUniformMat(shader, 'world_s', shadowCam.world);
 	setUniformMat(shader, 'proj_s', shadowCam.proj);
 	texture.bind(0);
 	shadowCam.fb.tex.bind(1);
+	gl.generateMipmap(gl.TEXTURE_2D);
 	camera.fb.clear([1,1,1,1]);
 	scene.render();
+
 	t += 1;
 }
 
